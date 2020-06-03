@@ -1,4 +1,5 @@
-import {constants} from "../utils.js"
+
+import * as BABYLON from  'babylonjs'
 
 class Body
 {

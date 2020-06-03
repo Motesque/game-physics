@@ -1,4 +1,4 @@
-import {constants} from "../utils.js"
+import * as BABYLON from  'babylonjs'
 
 
 export class ForceGeneratorGravity
@@ -42,9 +42,6 @@ export class ForceRegistry
 {
     forceRegistrations = [];
     
-    constructor() {  
-    }
-
     add(fg, body) {
         this.forceRegistrations.push([fg,body])
     }
