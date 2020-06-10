@@ -36,6 +36,26 @@ export class ForceGeneratorDrag
 
 }
 
+export class ForceGeneratorSpring
+{
+    constructor(bodyOther, restLength, k) {
+        this.restLength = restLength;
+        this.bodyOther = bodyOther;
+        this.k = k;
+    }
+
+    updateForces(body, durationSec) {
+       // vector between bodies
+       let d = body.position.subtract(this.bodyOther.position);
+       let dNormalized = d.clone().normalize();
+       let dMag = d.length();
+       let scalar = -(Math.abs(dMag) - this.restLength)*this.k;
+       let force = dNormalized.scale(scalar)
+       body.addForce(force);
+    }
+
+}
+
 
 
 export class ForceRegistry

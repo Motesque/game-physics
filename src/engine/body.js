@@ -3,11 +3,10 @@ import * as BABYLON from  'babylonjs'
 
 class Body
 {
-   
     acceleration =  BABYLON.Vector3.Zero();
     position = BABYLON.Vector3.Zero();
     velocity = BABYLON.Vector3.Zero();
-    inverseMass = 10;
+    inverseMass = 0;
     txNode = null;
     damping = 0.99;
     forceAccum = BABYLON.Vector3.Zero();
