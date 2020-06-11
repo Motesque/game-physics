@@ -7,12 +7,12 @@ export default class Contact
         this.bodyA = bodyA;
         this.bodyB = bodyB;
         this.contactNormal = contactNormal;
-        this.restitution = 1
+        this.restitution = 0.1
     }
 
     calculateSeparationVelocity() {
         let relativeVelocity = this.bodyA.velocity;
-        relativeVelocity.subtract(-this.bodyB.velocity)
+        relativeVelocity.subtract(this.bodyB.velocity)
         return BABYLON.Vector3.Dot(relativeVelocity,this.contactNormal); 
     }
 

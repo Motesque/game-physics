@@ -178,8 +178,9 @@ v
        this.bouncer =MeshBuilder.CreateSphere("bouncer", {diameter:1}, this.scene);
        let bouncerBody = new Body(this.bouncer);
        bouncerBody.position = new Vector3(0, 5, 3);
-       bouncerBody.inverseMass = 1/10000;
+       bouncerBody.inverseMass = 1/100;
        this.bodyDict["bouncer"] = bouncerBody;
+       //this.forceRegistry.add(new ForceGeneratorGravity(new Vector3(0,0.05,0)), bouncerBody);
 
        var ground = Mesh.CreateGroundFromHeightMap("ground", "assets/ground_height_map.jpg", 32, 32, 32,0, 2, this.scene, false);
        ground.receiveShadows = true;
