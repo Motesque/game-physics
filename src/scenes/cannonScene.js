@@ -1,5 +1,5 @@
 import createAxis from './utils.js'
-import Body from '../engine/body.js'
+import {inertiaTensorCuboid, Body} from '../engine/body.js'
 import Contact from '../engine/contact.js'
 import {ForceGeneratorGravity, ForceGeneratorDrag, ForceRegistry, ForceGeneratorSpring} from "../engine/force.js"
 import {ActionManager, Vector3, Color3, HemisphericLight, PointLight, 
@@ -22,6 +22,7 @@ class CannonScene {
         this.uiTexture = null;
         this.prevSpacePressed = false;
         this.muzzleVelocity = 10;
+        this.pickPoint = null;
         this.scene.actionManager = new  ActionManager(this.scene);
         this.forceRegistry = new ForceRegistry();
         this.forceGenGravity =  new ForceGeneratorGravity(new Vector3(0,-10,0));
@@ -52,7 +53,7 @@ v
         container.paddingTop = "10px"
         container.paddingLeft = "10px"
         container.thickness = 0;
-      
+        
     
         var panel = new GUI.StackPanel();    
         panel.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;     
@@ -135,9 +136,23 @@ v
         var hdrTexture = CubeTexture.CreateFromPrefilteredData("assets/environment.dds", this.scene);
         this.scene.createDefaultSkybox(hdrTexture, true, 200, 0.3);
         this.scene.environmentTexture = hdrTexture;
-
-      
     }
+
+    addPlank() {
+        this.plank = MeshBuilder.CreateBox("plank", {width:5, height:0.5, size:0.5}, this.scene);
+        var texture = new  WoodProceduralTexture("assets", 512, this.scene);
+        var material = new StandardMaterial("material", this.scene);
+        material.diffuseTexture = texture;
+        this.plank.material = material; 
+
+        let plankBody = new Body(this.plank);
+        plankBody.position = new Vector3(0, 5, 0);
+        plankBody.velocity = new Vector3(0, 0, 0);
+        plankBody.inverseMass = 1/10;
+        plankBody.inverseInertiaTensor = Matrix.Invert(inertiaTensorCuboid(10,5,0.5,0.5));
+        this.bodyDict["plank"] = plankBody;
+    }
+
     initWorld() {
         // Add and manipulate meshes in the scene
         this.sphere = MeshBuilder.CreateSphere("sphere", {diameter:0.5}, this.scene);
@@ -155,6 +170,7 @@ v
         this.forceRegistry.add(this.forceGenGravity, sphereBody);
         this.forceRegistry.add(this.forceGenDrag, sphereBody);
 
+        this.addPlank();
         let sphereChain = MeshBuilder.CreateSphere("sphereChain", {diameter:0.2}, this.scene);
         this.shadowGenerator.getShadowMap().renderList.push(sphereChain);
         let sphereChainBody = new Body(sphereChain);
@@ -195,7 +211,7 @@ v
         let axis = createAxis(1);
         axis.parent = this.sphere;
         this.collAxis =  createAxis(1);
-
+        this.pickPoint =  createAxis(1);
         SceneLoader.LoadAssetContainer("/assets/", "cannon.gltf", this.scene,  (container) => {
             var meshes = container.meshes;
             for (let m of meshes) {
@@ -235,6 +251,18 @@ v
             }
             catch (e) {}
         }
+        if (this.keyMap["a"]) {
+            try {
+                this.objDict.cannon.rotate(Axis.Y,  Math.PI/140, Space.WORLD);
+            }
+            catch (e) {}
+        }
+        if (this.keyMap["d"]) {
+            try {
+                this.objDict.cannon.rotate(Axis.Y,  -Math.PI/140, Space.WORLD);
+            }
+            catch (e) {}
+        }
         let spacePressed = this.keyMap[" "];
         if (!this.prevSpacePressed && spacePressed) {
             try {
@@ -250,6 +278,7 @@ v
         let elapsedSec = elapsedMs/1000
         this.forceRegistry.updateForces(elapsedSec);
 
+    
         for (let body of Object.entries(this.bodyDict)) {
             body[1].integrate(elapsedSec);  
         }
@@ -261,7 +290,19 @@ v
             let a = new Contact(this.bodyDict.ball, this.bodyDict["bouncer"], dir.scale(1))
             a.resolve();
         }
-      
+        
+        this.scene.onPointerDown = () => {
+            let ray = this.scene.createPickingRay(this.scene.pointerX, this.scene.pointerY, Matrix.Identity(), this.camera);	
+
+            var hit = this.scene.pickWithRay(ray);
+
+            if (hit.pickedPoint && hit.pickedMesh === this.plank){
+                this.pickPoint.position = hit.pickedPoint;
+                this.bodyDict["plank"].addForceAtPoint(ray.direction.scale(100), this.pickPoint.position)
+               // this.bodyDict["plank"].addForce(ray.direction.scale(100))
+            }
+        }   
+
         // reset the pos if below ground
         if ( this.bodyDict.ball.position.y < 0) {
             this.bodyDict.ball.position = this.objDict.cannon.position.clone();
